@@ -1,0 +1,4 @@
+*.dSYM
+OPEN_GL
+*.out
+.DS_Store
