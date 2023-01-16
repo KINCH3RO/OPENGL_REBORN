@@ -30,6 +30,7 @@
 				"CoreFoundation",
 				"-Wno-deprecated",
 
+
             ],
             "options": {
                 "cwd": "${fileDirname}"
