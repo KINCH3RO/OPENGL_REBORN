@@ -15,9 +15,9 @@ int main(void)
 	char infoLog[512];
 
 	float vertices[] = {
-		-0.5f, -0.5f, 0.0f,
-		0.5f, -0.5f, 0.0f,
-		0.0f, 0.5f, 0.0f};
+		-0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
+		0.5f, -0.5f, 0.0f,	0.0f, 1.0f, 0.0f,
+		0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f };
 
 	WindowManager winMG(800, 600, "OPENGL_REBORN");
 	window = winMG.initWindow();
@@ -41,25 +41,33 @@ int main(void)
 	// GL_STREAM_DRAW: the data is set only once and used by the GPU at most a few times.
 	// GL_STATIC_DRAW: the data is set only once and used many times.
 	// GL_DYNAMIC_DRAW: the data is changed a lot and used many times.
-	// configuring how data should be interpreted from the gpu
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+	// configuring how data should be interpreted from the gpu (verticies position) starting from byte 0
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
 	// enabling the location of it
 	glEnableVertexAttribArray(0);
+		// configuring how data should be interpreted from the gpu (verticies colors) starting from byte (3 * sizeof(float) = 24)
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3* sizeof(float)));
+	// enabling the location of it
+	glEnableVertexAttribArray(1);
+
 	// unbound any vertex array for later user
 	glBindVertexArray(0);
 	// fragment shader and vertex shader source code
 	const char *vertexShaderSource = "#version 330 core\n"
 									 "layout (location = 0) in vec3 aPos;\n"
+									 "layout (location = 1) in vec3 aColor;\n"
+									 "out vec3 inFragColor;\n"
 									 "void main()\n"
 									 "{\n"
 									 "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+									 "   inFragColor = aColor;\n"
 									 "}\0";
 	const char *fragmentShaderSource = "#version 330 core\n"
 									   "out vec4 FragColor\n;"
-									   "uniform vec4 ourColor; \n"
+									   "in vec3 inFragColor\n;"
 									   "void main()\n"
 									   "{\n"
-									   "FragColor = ourColor;\n"
+									   		"FragColor = vec4(inFragColor,1.0);\n"
 									   "}\0";
 	// creating vertex shader and handling errors
 	vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -108,10 +116,7 @@ int main(void)
 std::cout << "yes\n";
 	while (!glfwWindowShouldClose(window))
 	{
-		float timeVaue = glfwGetTime();
-		float sinValue = sin(timeVaue);
-		int vertexUniformLocation = glGetUniformLocation(shaderProgram, "ourColor");
-		glUniform4f(vertexUniformLocation, 0.0f, sinValue, sinValue, 1.0f);
+
 
 		// process input
 		inputMG.registerKeyPress([](GLFWwindow *win) -> void
