@@ -4,20 +4,18 @@
 #include <iostream>
 #include "WindowManager.h"
 #include "InputManager.h"
+#include "shader.h"
 #include <math.h>
 int main(void)
 {
 
 	GLFWwindow *window;
-	unsigned int VBO, VAO, vertexShader, fragmentShader, shaderProgram;
-	// store shadeer info
-	int success;
-	char infoLog[512];
+	unsigned int VBO, VAO;
 
 	float vertices[] = {
 		-0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
-		0.5f, -0.5f, 0.0f,	0.0f, 1.0f, 0.0f,
-		0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f };
+		0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
+		0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f};
 
 	WindowManager winMG(800, 600, "OPENGL_REBORN");
 	window = winMG.initWindow();
@@ -45,78 +43,23 @@ int main(void)
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
 	// enabling the location of it
 	glEnableVertexAttribArray(0);
-		// configuring how data should be interpreted from the gpu (verticies colors) starting from byte (3 * sizeof(float) = 24)
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3* sizeof(float)));
+	// configuring how data should be interpreted from the gpu (verticies colors) starting from byte (3 * sizeof(float) = 24)
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
 	// enabling the location of it
 	glEnableVertexAttribArray(1);
 
 	// unbound any vertex array for later user
 	glBindVertexArray(0);
 	// fragment shader and vertex shader source code
-	const char *vertexShaderSource = "#version 330 core\n"
-									 "layout (location = 0) in vec3 aPos;\n"
-									 "layout (location = 1) in vec3 aColor;\n"
-									 "out vec3 inFragColor;\n"
-									 "void main()\n"
-									 "{\n"
-									 "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-									 "   inFragColor = aColor;\n"
-									 "}\0";
-	const char *fragmentShaderSource = "#version 330 core\n"
-									   "out vec4 FragColor\n;"
-									   "in vec3 inFragColor\n;"
-									   "void main()\n"
-									   "{\n"
-									   		"FragColor = vec4(inFragColor,1.0);\n"
-									   "}\0";
-	// creating vertex shader and handling errors
-	vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-	glCompileShader(vertexShader);
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-	if (!success)
-	{
-		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n"
-				  << infoLog << std::endl;
-	}
-	// creating fragment shader and handling errors
-	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-	glCompileShader(fragmentShader);
 
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-	if (!success)
-	{
-		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n"
-				  << infoLog << std::endl;
-	}
-	// shaders need to be linked with a shader program for later use
-	shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glLinkProgram(shaderProgram);
-	glGetShaderiv(shaderProgram, GL_LINK_STATUS, &success);
-	if (!success)
-	{
-		glGetShaderInfoLog(shaderProgram, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::PROGRAM::COMPILATION_FAILED\n"
-				  << infoLog << std::endl;
-	}
-	// unbounding any shader program
-	glUseProgram(0);
-	// liberating ressources
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
-	// binding the vertex array and shader program
-	glUseProgram(shaderProgram);
+	// replacing vertex shader and fragment shader compilation with abstract class
+	Shader shaderProgram("./shaders_src/shader_chapter_shaders/vertexShader.glsl",
+						 "./shaders_src/shader_chapter_shaders/fragmentShader.glsl");
+	shaderProgram.use();
 	glBindVertexArray(VAO);
-
-std::cout << "yes\n";
+	std::cout << "yes\n";
 	while (!glfwWindowShouldClose(window))
 	{
-
 
 		// process input
 		inputMG.registerKeyPress([](GLFWwindow *win) -> void
@@ -132,7 +75,6 @@ std::cout << "yes\n";
 		// check for events
 		glfwPollEvents();
 	}
-
 
 	return 0;
 }
