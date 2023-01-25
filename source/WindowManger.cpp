@@ -1,4 +1,4 @@
-#include "WindowManager.h"
+#include "include/WindowManager.h"
 
 WindowManager::WindowManager(int width, int height, char *name)
 {

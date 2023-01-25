@@ -2,7 +2,7 @@
 #include "GLFW/glfw3.h"
 
 #include <iostream>
-#include "WindowManager.h"
+#include  "WindowManager.h"
 #include "InputManager.h"
 #include "shader.h"
 #include <math.h>
