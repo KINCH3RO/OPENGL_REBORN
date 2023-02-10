@@ -8,7 +8,6 @@
 				"-std=c++17",
 				"-fdiagnostics-color=always",
 				"-Wall",
-				"-g",
 				"${workspaceFolder}/Dependencies/library/GLAD/glad.c",
 				"${workspaceFolder}/Dependencies/library/GLFW/libglfw3.a",
 				"-L",

@@ -2,20 +2,30 @@
 #include "GLFW/glfw3.h"
 
 #include <iostream>
-#include  "WindowManager.h"
+#include "WindowManager.h"
 #include "InputManager.h"
-#include "shader.h"
+#include "Shader.h"
+#include "stb_image.h"
 #include <math.h>
 int main(void)
 {
 
 	GLFWwindow *window;
-	unsigned int VBO, VAO;
+	unsigned int VBO, VAO, EBO;
 
 	float vertices[] = {
-		-0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
-		0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
-		0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f};
+		// positions          // colors           // texture coords
+		0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,	  // top right
+		0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,  // bottom right
+		-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // bottom left
+		-0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f	  // top left
+	};
+
+	unsigned int indices[] = {
+		// note that we start from 0!
+		0, 1, 3, // first triangle
+		1, 2, 3	 // second triangle
+	};
 
 	WindowManager winMG(800, 600, "OPENGL_REBORN");
 	window = winMG.initWindow();
@@ -26,6 +36,11 @@ int main(void)
 	glGenVertexArrays(1, &VAO);
 	// binding vertex array
 	glBindVertexArray(VAO);
+
+	glGenBuffers(1, &EBO);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 	// generating 1  buffer that has id VBO
 	glGenBuffers(1, &VBO);
@@ -40,21 +55,44 @@ int main(void)
 	// GL_STATIC_DRAW: the data is set only once and used many times.
 	// GL_DYNAMIC_DRAW: the data is changed a lot and used many times.
 	// configuring how data should be interpreted from the gpu (verticies position) starting from byte 0
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
 	// enabling the location of it
 	glEnableVertexAttribArray(0);
 	// configuring how data should be interpreted from the gpu (verticies colors) starting from byte (3 * sizeof(float) = 24)
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float)));
 	// enabling the location of it
 	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
+	// enabling the location of it
+	glEnableVertexAttribArray(2);
 
 	// unbound any vertex array for later user
 	glBindVertexArray(0);
 	// fragment shader and vertex shader source code
 
 	// replacing vertex shader and fragment shader compilation with abstract class
-	Shader shaderProgram("./shaders_src/shader_chapter_shaders/vertexShader.glsl",
-						 "./shaders_src/shader_chapter_shaders/fragmentShader.glsl");
+	Shader shaderProgram("./shaders_src/texture_chapter_shaders/vertexShader.glsl",
+						 "./shaders_src/texture_chapter_shaders/fragmentShader.glsl");
+
+	// textures
+	int width, height, nrChannels;
+
+	unsigned int texture;
+	glGenTextures(1, &texture);
+
+	glBindTexture(GL_TEXTURE_2D, texture);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	unsigned char *data = stbi_load("resources/textures/container.jpg", &width, &height, &nrChannels, 0);
+	if (!data)
+		std::cout << "failed to load textures\n";
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	stbi_image_free(data);
+	///
 	shaderProgram.use();
 	glBindVertexArray(VAO);
 	std::cout << "yes\n";
@@ -68,8 +106,10 @@ int main(void)
 		// rendering goes here
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
-		// draawing with peremetive GL_TRIANGLE starting for vertex 0 and draw 3 verticies
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		//wrireframem mode
+		// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		// swap double buffres
 		glfwSwapBuffers(window);
 		// check for events
